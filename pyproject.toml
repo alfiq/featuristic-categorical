@@ -1,8 +1,8 @@
 [project]
-name = "featuristic"
+name = "featuristic-categorical"
 
 # Versions should comply with PEP 440
-version = "1.1.0"
+version = "1.2.0"
 
 
 # This is a one-line description or tagline of what your project does. This
@@ -128,8 +128,8 @@ where = ["src/"]
 
 # Project homepage, often a link to GitHub or GitLab
 # Often specified in the [project] table
-homepage = "https://www.featuristic.co.uk"
+homepage = "https://github.com/alfiq/featuristic-categorical"
 
 # The source code repository, don't use this if your homepage
 # is the repo
-repository = "https://github.com/martineastwood/featuristic.git"
+repository = "https://github.com/alfiq/featuristic-categorical.git"

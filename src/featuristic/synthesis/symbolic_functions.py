@@ -662,7 +662,7 @@ class SymbolicCatCodes:
             self.mapping_ = {cat: i for i, cat in enumerate(unique_cats)}
             self.fitted_ = True
 
-        return x.map(self.mapping_).fillna(-1)
+        return x.astype(object).map(self.mapping_).fillna(-1)
 
     def __str__(self):
         return self.format_str
@@ -694,7 +694,7 @@ class SymbolicFrequencyEncoding:
             self.fitted_ = True
 
         # Use 0.0 for unknown categories in transform
-        return x.map(self.mapping_).fillna(0.0)
+        return x.astype(object).map(self.mapping_).fillna(0.0)
 
     def __str__(self):
         return self.format_str
