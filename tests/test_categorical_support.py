@@ -211,4 +211,28 @@ def test_symbolic_hashing_interaction():
     assert pd.api.types.is_numeric_dtype(res)
     assert len(res) == 2
 
+def test_categorical_dtype_robustness():
+    # Test that SymbolicCatCodes and SymbolicFrequencyEncoding
+    # don't crash when passed a pandas.Categorical dtype (common in Kaggle)
+    cat_data = pd.Series(pd.Categorical(['apple', 'banana', 'apple']))
+    
+    # Test CatCodes
+    func_codes = ft.synthesis.symbolic_functions.SymbolicCatCodes()
+    res_codes = func_codes(cat_data)
+    assert len(res_codes) == 3
+    assert not res_codes.isna().any()
+    
+    # Test Frequency
+    func_freq = ft.synthesis.symbolic_functions.SymbolicFrequencyEncoding()
+    res_freq = func_freq(cat_data)
+    assert len(res_freq) == 3
+    assert res_freq.iloc[0] == approx(2/3)
+
+    # Test with new categories during transform phase
+    new_cat_data = pd.Series(pd.Categorical(['cherry']))
+    res_codes_new = func_codes(new_cat_data)
+    # Should fill with -1 without crashing
+    assert res_codes_new.iloc[0] == -1
+
+
 
