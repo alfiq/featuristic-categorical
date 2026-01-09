@@ -109,6 +109,8 @@ class BasePopulation:
             current_cost = sys.maxsize
         else:
             current_cost = cost_func(X[X.columns[genome == 1]], y)
+            # Add a tiny penalty for complexity to favor smaller feature sets
+            current_cost += genome.sum() * 1e-12
         return current_cost
 
     def _selection(self, scores: List, k: int = 3) -> np.ndarray:

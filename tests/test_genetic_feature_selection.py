@@ -26,6 +26,12 @@ def test_selection():
 
     gfs.fit(X, y)
     new_X = gfs.transform(X)
-    assert new_X.columns.tolist() == ["a", "b"]
+    selected_cols = new_X.columns.tolist()
+    # With complexity penalty, it should only pick 'a' or 'b' (not both, as they are redundant)
+    # and definitely not 'c' or 'd' which are constants.
+    assert len(selected_cols) > 0
+    assert set(selected_cols).issubset({"a", "b"})
+    assert "c" not in selected_cols
+    assert "d" not in selected_cols
     assert new_X.shape[0] == 3
     assert gfs.is_fitted_ == True

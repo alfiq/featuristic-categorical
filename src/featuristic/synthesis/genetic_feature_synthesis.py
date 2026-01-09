@@ -115,7 +115,7 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
             for func in functions:
                 found = False
                 for op in operations:
-                    if op().name == func:
+                    if op.name == func:
                         self.functions.append(op)
                         found = True
                         break
@@ -192,11 +192,11 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
         )
 
         population.population = [x["individual"] for x in self.hall_of_fame]
-        features = pd.DataFrame(population.evaluate(X)).T
+        features = pd.DataFrame(population.evaluate(X, y)).T
 
-        features.columns = [f"feature_{i}" for i in range(self.len_hall_of_fame)]
+        features.columns = [f"feature_{i}" for i in range(len(self.hall_of_fame))]
 
-        for i in range(self.len_hall_of_fame):
+        for i in range(len(self.hall_of_fame)):
             self.hall_of_fame[i]["name"] = f"feature_{i}"
 
         selected = (
@@ -253,7 +253,7 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
 
         for gen in range(self.max_generations):
             fitness = []
-            prediction = self.population.evaluate(X_copy)
+            prediction = self.population.evaluate(X_copy, y_copy)
             score = self.population.compute_fitness(
                 self.fitness_func, self.parsimony_coefficient, prediction, y_copy
             )
@@ -348,7 +348,7 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
             )
 
         population.population = [x["individual"] for x in self.hall_of_fame]
-        output = pd.DataFrame(population.evaluate(X.reset_index(drop=True))).T
+        output = pd.DataFrame(population.evaluate(X.reset_index(drop=True), y)).T
         output.columns = [x["name"] for x in self.hall_of_fame]
 
         if self.return_all_features:
@@ -398,6 +398,60 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
             output.append(tmp)
 
         return pd.DataFrame(output)
+
+    def get_feature_transformers(self) -> dict:
+        """
+        Extract all fitted internal states (transformers) from the best features.
+
+        Returns
+        -------
+        dict
+            A dictionary mapping feature names to their internal transformers' states.
+        """
+        if not self.fit_called:
+            raise ValueError("Must call fit before get_feature_transformers")
+
+        transformers = {}
+        for prog_info in self.hall_of_fame:
+            feature_name = prog_info["name"]
+            node_states = []
+            self._extract_node_states(prog_info["individual"], node_states)
+            if node_states:
+                transformers[feature_name] = node_states
+
+        return transformers
+
+    def _extract_node_states(self, node, states):
+        """
+        Recursively extract states from a program tree.
+        """
+        if "func" in node:
+            func_obj = node["func"]
+
+            # Capture stateful categorical mappings or sklearn encoders
+            if hasattr(func_obj, "fitted_") and func_obj.fitted_:
+                state = getattr(func_obj, "mapping_", None)
+                if state is None and hasattr(func_obj, "encoder_"):
+                    # For sklearn encoders, return the object itself or its relevant params
+                    state = func_obj.encoder_
+                if state is None and hasattr(func_obj, "category_"):
+                    # For operators that pick a specific category (e.g. indicator)
+                    state = func_obj.category_
+
+                states.append({
+                    "op": func_obj.name,
+                    "state": state
+                })
+
+            # Capture random constants
+            if hasattr(func_obj, "random_constant"):
+                states.append({
+                    "op": func_obj.name,
+                    "state": func_obj.random_constant
+                })
+
+            for child in node.get("children", []):
+                self._extract_node_states(child, states)
 
     def plot_history(self, ax: Union[matplotlib.axes._axes.Axes | None] = None):
         """

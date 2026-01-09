@@ -37,6 +37,9 @@ def fitness_pearson(
         if y_pred.isna().any():
             return sys.maxsize
 
+        if not pd.api.types.is_numeric_dtype(y_pred):
+            return sys.maxsize
+
         if np.isinf(y_pred).any():
             return sys.maxsize
 

@@ -2,6 +2,7 @@
 
 from typing import List
 
+import numpy as np
 import pandas as pd
 from sklearn.feature_selection import f_classif, f_regression
 from tqdm import tqdm
@@ -120,10 +121,15 @@ class MaxRelevanceMinRedundancy:
         # set the maximum number of features to select
         k: int = min(self.k, X.shape[1])
 
+        X = X.select_dtypes(include=["number"])
         X = X.loc[:, X.nunique() > 1].dropna(axis=1)
 
+        if X.shape[1] == 0:
+            return []
+
         # calculate the f-statistic and the correlation matrix
-        f_stat = pd.Series(self.metric(X, y)[0], index=X.columns)
+        f_vals = self.metric(X, y.astype(float))[0].astype(float)
+        f_stat = pd.Series(f_vals, index=X.columns)
         corr = pd.DataFrame(FLOOR, index=X.columns, columns=X.columns)
 
         # initialize list of selected features and list of excluded features

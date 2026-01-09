@@ -24,7 +24,7 @@ def random_prog(depth: int, X: pd.DataFrame, operations: List):
         The list of operations to use.
     """
     if np.random.randint(0, 10) >= depth * 2:
-        op = operations[np.random.randint(0, len(operations) - 1)]
+        op = operations[np.random.randint(0, len(operations))]
         if not isinstance(op, CustomSymbolicFunction):
             op = op()
 
@@ -36,7 +36,7 @@ def random_prog(depth: int, X: pd.DataFrame, operations: List):
             "format_str": op.format_str,
         }
 
-    return {"feature_name": X.columns[np.random.randint(0, X.shape[1] - 1)]}
+    return {"feature_name": X.columns[np.random.randint(0, X.shape[1])]}
 
 
 def node_count(node: dict) -> int:
@@ -86,7 +86,7 @@ def select_random_node(selected: dict, parent: dict, depth: int) -> dict:
         return selected
 
     child_count = len(selected["children"])
-    child_idx = 0 if child_count <= 1 else np.random.randint(0, child_count - 1)
+    child_idx = 0 if child_count <= 1 else np.random.randint(0, child_count)
 
     return select_random_node(
         selected["children"][child_idx],

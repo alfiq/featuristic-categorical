@@ -58,7 +58,7 @@ class BasePopulation:
         ]
         return self
 
-    def evaluate(self, X: pd.DataFrame) -> List[pd.Series]:
+    def evaluate(self, X: pd.DataFrame, y: pd.Series = None) -> List[pd.Series]:
         """
         Evaluate the population against the dataframe of features.
 
@@ -66,6 +66,8 @@ class BasePopulation:
         ----
         X : pd.DataFrame
             The dataframe with the features.
+        y : pd.Series, optional
+            The target variable. Used for stateful transformations.
 
         return
         ------
@@ -106,7 +108,7 @@ class BasePopulation:
         """
         raise NotImplementedError
 
-    def _evaluate_df(self, node: dict, X: pd.DataFrame) -> pd.Series:
+    def _evaluate_df(self, node: dict, X: pd.DataFrame, y: pd.Series = None) -> pd.Series:
         """
         Evaluate the program against the dataframe of features.
 
@@ -118,6 +120,9 @@ class BasePopulation:
         X : pd.DataFrame
             The dataframe with the features.
 
+        y : pd.Series, optional
+            The target variable.
+
         return
         ------
         pd.Series
@@ -125,9 +130,15 @@ class BasePopulation:
         """
         if "children" not in node:
             return X[node["feature_name"]]
-        return pd.Series(
-            node["func"](*[self._evaluate_df(c, X) for c in node["children"]])
-        )
+
+        args = [self._evaluate_df(c, X, y) for c in node["children"]]
+        func_obj = node["func"]
+
+        # If the function is stateful and accepts a target, pass it
+        if hasattr(func_obj, "requires_target") and func_obj.requires_target:
+            return pd.Series(func_obj(*args, y=y))
+
+        return pd.Series(func_obj(*args))
 
     def _get_random_parent(self, fitness: List[float]) -> dict:
         """
@@ -144,7 +155,7 @@ class BasePopulation:
             The selected parent program.
         """
         tournament_members = [
-            np.random.randint(0, self.population_size - 1)
+            np.random.randint(0, self.population_size)
             for _ in range(self.tournament_size)
         ]
         member_fitness = [(fitness[i], self.population[i]) for i in tournament_members]
@@ -171,7 +182,7 @@ class BasePopulation:
         xover_point1 = select_random_node(offspring, None, 0)
         xover_point2 = select_random_node(selected2, None, 0)
         child_count = len(xover_point1["children"])
-        child_idx = 0 if child_count <= 1 else np.random.randint(0, child_count - 1)
+        child_idx = 0 if child_count <= 1 else np.random.randint(0, child_count)
         xover_point1["children"][child_idx] = xover_point2
         return offspring
 
@@ -190,7 +201,7 @@ class BasePopulation:
         offspring = deepcopy(selected)
         mutate_point = select_random_node(offspring, None, 0)
         child_count = len(mutate_point["children"])
-        child_idx = 0 if child_count <= 1 else np.random.randint(0, child_count - 1)
+        child_idx = 0 if child_count <= 1 else np.random.randint(0, child_count)
         mutate_point["children"][child_idx] = random_prog(0, X, self.operations)
         return offspring
 
@@ -262,11 +273,11 @@ class SerialPopulation(BasePopulation):
         """
         super().__init__(population_size, operations, tournament_size, crossover_prob)
 
-    def evaluate(self, X: pd.DataFrame) -> List[pd.Series]:
+    def evaluate(self, X: pd.DataFrame, y: pd.Series = None) -> List[pd.Series]:
         """
         Evaluate the population against the current program.
         """
-        return [self._evaluate_df(prog, X) for prog in self.population]
+        return [self._evaluate_df(prog, X, y) for prog in self.population]
 
     def compute_fitness(
         self,
@@ -367,12 +378,12 @@ class ParallelPopulation(BasePopulation):
         super().__init__(population_size, operations, tournament_size, crossover_prob)
         n_jobs = cpu_count() if n_jobs == -1 else n_jobs
 
-    def evaluate(self, X: pd.DataFrame) -> List[pd.Series]:
+    def evaluate(self, X: pd.DataFrame, y: pd.Series = None) -> List[pd.Series]:
         """
         Evaluate the population against the current program. This is done in parallel.
         """
         return Parallel(n_jobs=cpu_count())(
-            delayed(self._evaluate_df)(prog, X) for prog in self.population
+            delayed(self._evaluate_df)(prog, X, y) for prog in self.population
         )
 
     def compute_fitness(
