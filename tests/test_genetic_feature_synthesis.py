@@ -16,8 +16,9 @@ def test_gfs():
     with pytest.raises(Exception):
         gfs.fit(X=None, y=None)
 
-    X = pd.DataFrame({"a": [1, 2, 4], "b": [4, 5, 6]})
-    y = pd.Series([1, 2, 3])
+    # X needs enough variance/rows for simple correlations to not be trivial/singular
+    X = pd.DataFrame({"a": [1, 2, 4, 5, 8, 10, 12, 14, 15, 20], "b": [4, 5, 6, 2, 1, 8, 9, 3, 4, 10]})
+    y = pd.Series([1, 2, 3, 5, 8, 9, 10, 3, 4, 8])
 
     gfs.fit(X, y)
     new_X = gfs.transform(X)

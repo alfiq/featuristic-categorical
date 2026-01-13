@@ -43,6 +43,7 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
         custom_functions: Union[List[CustomSymbolicFunction] | None] = None,
         return_all_features: bool = True,
         n_jobs: int = -1,
+        max_samples: Union[int, None] = None,
         pbar: bool = True,
         verbose: bool = False,
     ):
@@ -157,6 +158,7 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
         else:
             self.n_jobs = n_jobs
 
+        self.max_samples = max_samples
         self.pbar = pbar
 
     def _update_hall_of_fame(self, fitness: List[float]):
@@ -227,6 +229,15 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
             X.reset_index(drop=True), y.reset_index(drop=True)
         )
 
+        # Subsample for genetic evolution if requested
+        X_evolve = X_copy
+        y_evolve = y_copy
+        if self.max_samples and len(X_copy) > self.max_samples:
+             X_evolve = X_copy.sample(n=self.max_samples, random_state=42) # simple random state for reproducibility if fixed
+             y_evolve = y_copy.loc[X_evolve.index]
+             if self.verbose:
+                 print(f"Subsampling data to {self.max_samples} samples for evolution.")
+
         # Initialize the population
         if self.n_jobs == 1:
             self.population = SerialPopulation(
@@ -234,7 +245,7 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
                 self.functions,
                 self.tournament_size,
                 self.crossover_proba,
-            ).initialize(X_copy)
+            ).initialize(X_evolve)
         else:
             self.population = ParallelPopulation(
                 self.population_size,
@@ -242,7 +253,7 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
                 self.tournament_size,
                 self.crossover_proba,
                 self.n_jobs,
-            ).initialize(X_copy)
+            ).initialize(X_evolve)
 
         # loss value to minimize
         global_best = sys.maxsize
@@ -253,9 +264,9 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
 
         for gen in range(self.max_generations):
             fitness = []
-            prediction = self.population.evaluate(X_copy, y_copy)
+            prediction = self.population.evaluate(X_evolve, y_evolve)
             score = self.population.compute_fitness(
-                self.fitness_func, self.parsimony_coefficient, prediction, y_copy
+                self.fitness_func, self.parsimony_coefficient, prediction, y_evolve
             )
             # import pdb
 
@@ -299,10 +310,10 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
             # update the hall of fame with the best programs from the current generation
             self._update_hall_of_fame(fitness)
 
-            self.population.evolve(fitness, X_copy)
+            self.population.evolve(fitness, X_evolve)
 
         # select the best features using mrmr
-        self._select_best_features(X_copy, y_copy)
+        self._select_best_features(X_evolve, y_evolve)
 
         if self.verbose:
             print("Symbolic Feature Generator")
@@ -397,7 +408,7 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
             }
             output.append(tmp)
 
-        return pd.DataFrame(output)
+        return pd.DataFrame(output, columns=["name", "formula", "fitness"])
 
     def get_feature_transformers(self) -> dict:
         """

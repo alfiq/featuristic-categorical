@@ -36,7 +36,12 @@ def test_robustness_on_strings():
     # Our implementation returns a Series of NaNs on Exception.
     
     res_sin = sin(s)
-    assert res_sin.isna().all()
+    # Result might be Series or Numpy array (optimization)
+    if isinstance(res_sin, pd.Series):
+        assert res_sin.isna().all()
+    else:
+        assert np.isnan(res_sin).all()
+    
     assert len(res_sin) == 2
 
     # Test mult typo fix

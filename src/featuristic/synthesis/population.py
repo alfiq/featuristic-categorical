@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, cpu_count, delayed
 
-from .program import random_prog, select_random_node, node_count
+from .program import random_prog, select_random_node, node_count, render_prog
 
 
 class BasePopulation:
@@ -43,6 +43,7 @@ class BasePopulation:
         self.population = None
         self.tournament_size = tournament_size
         self.crossover_prob = crossover_prob
+        self._cache = {}
 
     def initialize(self, X: pd.DataFrame) -> Self:
         """
@@ -108,7 +109,20 @@ class BasePopulation:
         """
         raise NotImplementedError
 
-    def _evaluate_df(self, node: dict, X: pd.DataFrame, y: pd.Series = None) -> pd.Series:
+    def _get_prog_signature(self, node: dict):
+        """
+        Get a hashable signature for the program node.
+        """
+        if "children" not in node:
+            return node["feature_name"]
+        
+        # Use function name or the function object hash if name distinctness is insufficient
+        # func.name strings are better for readability and usually sufficient
+        fname = node["func"].name
+        child_sigs = tuple(self._get_prog_signature(c) for c in node["children"])
+        return (fname, child_sigs)
+
+    def _evaluate_program(self, node: dict, X_data: dict, y=None) -> np.ndarray:
         """
         Evaluate the program against the dataframe of features.
 
@@ -117,28 +131,53 @@ class BasePopulation:
         node : dict
             The program to evaluate.
 
-        X : pd.DataFrame
-            The dataframe with the features.
+        X_data : dict
+            Dictionary of numpy arrays for features.
 
         y : pd.Series, optional
             The target variable.
 
         return
         ------
-        pd.Series
+        np.ndarray
             The predicted values.
         """
+        # Memoization check
+        # Use fast tuple signature
+        prog_sig = self._get_prog_signature(node)
+        
+        if prog_sig in self._cache:
+            return self._cache[prog_sig]
+
         if "children" not in node:
-            return X[node["feature_name"]]
+            # Leaf node (feature)
+            res = X_data[node["feature_name"]]
+        else:
+            # Recursive evaluation
+            args = [self._evaluate_program(c, X_data, y) for c in node["children"]]
+            func_obj = node["func"]
 
-        args = [self._evaluate_df(c, X, y) for c in node["children"]]
-        func_obj = node["func"]
+            # If the function is stateful and accepts a target, pass it
+            if hasattr(func_obj, "requires_target") and func_obj.requires_target:
+                res = func_obj(*args, y=y)
+            else:
+                res = func_obj(*args)
 
-        # If the function is stateful and accepts a target, pass it
-        if hasattr(func_obj, "requires_target") and func_obj.requires_target:
-            return pd.Series(func_obj(*args, y=y))
+        # Cache the result
+        self._cache[prog_sig] = res
+        return res
 
-        return pd.Series(func_obj(*args))
+    def _evaluate_df(self, node: dict, X: pd.DataFrame, y: pd.Series = None) -> pd.Series:
+        """
+        Legacy wrapper for compatibility or single-program checks.
+        Uses the optimized implementation.
+        """
+        # Convert X to dict of numpy arrays for speed
+        X_data = {col: X[col].values for col in X.columns}
+        res = self._evaluate_program(node, X_data, y)
+        if isinstance(res, pd.Series):
+            return res
+        return pd.Series(res)
 
     def _get_random_parent(self, fitness: List[float]) -> dict:
         """
@@ -273,11 +312,25 @@ class SerialPopulation(BasePopulation):
         """
         super().__init__(population_size, operations, tournament_size, crossover_prob)
 
-    def evaluate(self, X: pd.DataFrame, y: pd.Series = None) -> List[pd.Series]:
+    def evaluate(self, X: pd.DataFrame, y: pd.Series = None) -> List[np.ndarray]:
         """
         Evaluate the population against the current program.
         """
-        return [self._evaluate_df(prog, X, y) for prog in self.population]
+        # Clear cache at start of evaluation if the data X is different?
+        # Actually, if we fit, X is same. If we transform new data, X is different.
+        # We should clear cache to be safe, or manage it smarter. 
+        # For simplicity and safety across calls with different data: clear it.
+        self._cache = {}
+        
+        # Pre-convert data to numpy for speed
+        X_data = {col: X[col].values for col in X.columns}
+        
+        results = []
+        for prog in self.population:
+            res = self._evaluate_program(prog, X_data, y)
+            results.append(res)
+            
+        return results
 
     def compute_fitness(
         self,
@@ -376,15 +429,35 @@ class ParallelPopulation(BasePopulation):
             The number of jobs to use in the parallel evaluation.
         """
         super().__init__(population_size, operations, tournament_size, crossover_prob)
-        n_jobs = cpu_count() if n_jobs == -1 else n_jobs
+        self.n_jobs = cpu_count() if n_jobs == -1 else n_jobs
 
     def evaluate(self, X: pd.DataFrame, y: pd.Series = None) -> List[pd.Series]:
         """
         Evaluate the population against the current program. This is done in parallel.
         """
-        return Parallel(n_jobs=cpu_count())(
-            delayed(self._evaluate_df)(prog, X, y) for prog in self.population
+        # Parallel evaluation is tricky with caching.
+        # We'll use the optimized _evaluate_program but without shared caching across processes.
+        # However, we still benefit from the X_data conversion/numpy speedup within each task.
+        
+        # Note: Sending X_data (dict of arrays) is likely faster/same as DataFrame.
+        X_data = {col: X[col].values for col in X.columns}
+        
+        # We can't easily populate self._cache here from workers.
+        # But we can pass an empty local cache to _evaluate_program if we modified it to accept one or use instance.
+        # Since _evaluate_program uses self._cache, and 'self' is pickled, 
+        # each worker gets a copy of self. So they have their own local cache for the duration of that individual's eval.
+        # This helps if an individual has repeated subtrees (common).
+        
+        return Parallel(n_jobs=self.n_jobs)(
+            delayed(self._evaluate_wrapper)(prog, X_data, y) for prog in self.population
         )
+
+    def _evaluate_wrapper(self, prog, X_data, y):
+        # Helper to ensure we wrap back to Series for consistency with rest of pipeline expectations
+        # and manage local cache state for the worker
+        self._cache = {} # Reset local cache for this worker/task
+        res = self._evaluate_program(prog, X_data, y)
+        return res
 
     def compute_fitness(
         self,

@@ -175,7 +175,7 @@ class SymbolicAdd:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -211,7 +211,7 @@ class SymbolicSubtract:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -247,7 +247,7 @@ class SymbolicMultiply:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -284,7 +284,7 @@ class SymbolicDivide:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -320,7 +320,7 @@ class SymbolicAbs:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -356,7 +356,7 @@ class SymbolicNegate:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -392,7 +392,7 @@ class SymbolicSin:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -428,7 +428,7 @@ class SymbolicCos:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -464,7 +464,7 @@ class SymbolicTan:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -500,7 +500,7 @@ class SymbolicSqrt:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -536,7 +536,7 @@ class SymbolicSquare:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -572,7 +572,7 @@ class SymbolicCube:
         try:
             return self.func(*args)
         except Exception:
-            return pd.Series([np.nan] * len(args[0]))
+            return np.full(len(args[0]), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -600,7 +600,7 @@ class SymbolicAddConstant:
         try:
             return self.random_constant + x
         except Exception:
-            return pd.Series([np.nan] * len(x))
+            return np.full(len(x), np.nan)
 
     def __str__(self):
         return self.format_str
@@ -628,7 +628,7 @@ class SymbolicMulConstant:
         try:
             return self.random_constant * x
         except Exception:
-            return pd.Series([np.nan] * len(x))
+            return np.full(len(x), np.nan)
 
     def __str__(self):
         return self.format_str

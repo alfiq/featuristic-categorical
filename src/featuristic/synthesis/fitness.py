@@ -32,21 +32,31 @@ def fitness_pearson(
         The predicted values
     """
 
-    with warnings.catch_warnings(record=True) as _:
+    with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=scipy.stats.NearConstantInputWarning)
-        if y_pred.isna().any():
-            return sys.maxsize
+        
+        # y_pred might be a numpy array now. Ensure efficient checks.
+        if isinstance(y_pred, pd.Series):
+             y_pred = y_pred.values
+        if isinstance(y_true, pd.Series):
+             y_true = y_true.values
 
-        if not pd.api.types.is_numeric_dtype(y_pred):
-            return sys.maxsize
+        if not np.issubdtype(y_pred.dtype, np.number):
+            # Try to convert to float (handle object arrays of numbers)
+            try:
+                y_pred = y_pred.astype(float)
+            except (ValueError, TypeError):
+                # If conversion fails (e.g. strings), it's invalid
+                return sys.maxsize
 
-        if np.isinf(y_pred).any():
-            return sys.maxsize
+        if not np.isfinite(y_pred).all():
+             return sys.maxsize
 
         if np.ptp(y_true) == 0 or np.ptp(y_pred) == 0:
             return sys.maxsize
 
         loss = abs(pearsonr(y_true, y_pred).statistic)
+        
         penalty = node_count(program) ** parsimony
         loss /= penalty
         return -loss
