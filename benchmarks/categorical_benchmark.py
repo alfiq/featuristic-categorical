@@ -22,12 +22,13 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import featuristic as ft
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression, RidgeCV
 from sklearn.metrics import r2_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+import featuristic as ft
 
 warnings.filterwarnings("ignore")
 
@@ -36,9 +37,11 @@ IS_UPSTREAM = hasattr(ft, "featuristic_lib")
 # (ignored by builds that do not have the option).
 import inspect as _inspect
 
-HAS_CATINT = IS_UPSTREAM and "categorical_interactions" in _inspect.signature(
-    ft.GeneticFeatureSynthesis.__init__
-).parameters
+HAS_CATINT = (
+    IS_UPSTREAM
+    and "categorical_interactions"
+    in _inspect.signature(ft.GeneticFeatureSynthesis.__init__).parameters
+)
 _CATINT_ENV = __import__("os").environ.get("BENCH_CATINT")
 if IS_UPSTREAM:
     LIB = "upstream"
@@ -49,14 +52,14 @@ else:
 # Knobs (env vars) so the run can be scaled up gradually from a tiny smoke test.
 import os
 
-POP = int(os.environ.get("BENCH_POP", 100))
-GENS = int(os.environ.get("BENCH_GENS", 20))
-NFEAT = int(os.environ.get("BENCH_NFEAT", 8))
+POP = int(os.environ.get("BENCH_POP", "100"))
+GENS = int(os.environ.get("BENCH_GENS", "20"))
+NFEAT = int(os.environ.get("BENCH_NFEAT", "8"))
 SEEDS = [int(s) for s in os.environ.get("BENCH_SEEDS", "0,1,2").split(",")]
-MAX_ROWS = int(os.environ.get("BENCH_ROWS", 8000))  # cap per dataset
+MAX_ROWS = int(os.environ.get("BENCH_ROWS", "8000"))  # cap per dataset
 # The fork's ParallelPopulation starts one process per worker, each holding a
 # copy of the data; n_jobs=-1 on every core is what exhausted RAM before.
-JOBS = int(os.environ.get("BENCH_JOBS", 1))
+JOBS = int(os.environ.get("BENCH_JOBS", "1"))
 
 
 # ----------------------------------------------------------------- datasets
@@ -143,21 +146,36 @@ def baseline_tf(X):
     cats = [c for c in X.columns if not pd.api.types.is_numeric_dtype(X[c])]
     nums = [c for c in X.columns if c not in cats]
     return ColumnTransformer(
-        [("c", OneHotEncoder(handle_unknown="ignore", min_frequency=5, sparse_output=False), cats),
-         ("n", StandardScaler(), nums)]
+        [
+            (
+                "c",
+                OneHotEncoder(
+                    handle_unknown="ignore", min_frequency=5, sparse_output=False
+                ),
+                cats,
+            ),
+            ("n", StandardScaler(), nums),
+        ]
     )
 
 
 def make_synth(seed):
-    common = dict(population_size=POP, max_generations=GENS, return_all_features=False,
-                  pbar=False, verbose=False)
+    common = {
+        "population_size": POP,
+        "max_generations": GENS,
+        "return_all_features": False,
+        "pbar": False,
+        "verbose": False,
+    }
     if IS_UPSTREAM:
         if HAS_CATINT and _CATINT_ENV is not None:
             common["categorical_interactions"] = _CATINT_ENV == "1"
         return ft.GeneticFeatureSynthesis(n_features=NFEAT, random_state=seed, **common)
     random.seed(seed)
     np.random.seed(seed)
-    return ft.GeneticFeatureSynthesis(num_features=NFEAT, n_jobs=JOBS, random_state=seed, **common)
+    return ft.GeneticFeatureSynthesis(
+        num_features=NFEAT, n_jobs=JOBS, random_state=seed, **common
+    )
 
 
 def numeric_block(F):
@@ -199,8 +217,17 @@ def run_one(name, fn, seed):
 
     only = score(task, Ftr, ytr, Fte, yte)
     plus = score(task, np.hstack([Btr, Ftr]), ytr, np.hstack([Bte, Fte]), yte)
-    return dict(dataset=name, seed=seed, task=task, lib=LIB, baseline=base,
-                synth_only=only, baseline_plus_synth=plus, fit_s=fit_s, transform_s=tr_s)
+    return {
+        "dataset": name,
+        "seed": seed,
+        "task": task,
+        "lib": LIB,
+        "baseline": base,
+        "synth_only": only,
+        "baseline_plus_synth": plus,
+        "fit_s": fit_s,
+        "transform_s": tr_s,
+    }
 
 
 def main(out):
@@ -210,8 +237,13 @@ def main(out):
         for seed in SEEDS:
             try:
                 r = run_one(name, DATASETS[name], seed)
-            except Exception as e:  # keep going; record the failure
-                r = dict(dataset=name, seed=seed, lib=LIB, error=f"{type(e).__name__}: {e}"[:300])
+            except Exception as e:  # noqa: BLE001 - keep going; record the failure
+                r = {
+                    "dataset": name,
+                    "seed": seed,
+                    "lib": LIB,
+                    "error": f"{type(e).__name__}: {e}"[:300],
+                }
             print(json.dumps(r), flush=True)
             rows.append(r)
     with open(out, "w") as f:

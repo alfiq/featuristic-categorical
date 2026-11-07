@@ -31,7 +31,7 @@ _EPS = 1e-9
 
 def _as_key(s: pd.Series) -> pd.Series:
     """Stable string keys for a categorical column (same at fit/transform)."""
-    if is_numeric_dtype(s) and not s.dtype == bool:
+    if is_numeric_dtype(s) and s.dtype != bool:
         s = pd.to_numeric(s, errors="coerce").astype(np.float64)
         return s.map(repr).astype(object)
     return s.astype(str).astype(object)

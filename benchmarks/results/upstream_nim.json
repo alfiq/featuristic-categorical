@@ -1,0 +1,200 @@
+[
+ {
+  "dataset": "group_deviation",
+  "seed": 0,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": -0.0025097769504385248,
+  "synth_only": 0.157711117548895,
+  "baseline_plus_synth": 0.20693895305283683,
+  "fit_s": 0.2859336000001349,
+  "transform_s": 0.03070499999967069
+ },
+ {
+  "dataset": "group_deviation",
+  "seed": 1,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": -0.015812874189546244,
+  "synth_only": 0.05248529612432229,
+  "baseline_plus_synth": 0.07908251817501766,
+  "fit_s": 0.3058923000003233,
+  "transform_s": 0.031241500000305678
+ },
+ {
+  "dataset": "group_deviation",
+  "seed": 2,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": -0.008418837497114584,
+  "synth_only": 0.08073278282287433,
+  "baseline_plus_synth": 0.07563188319894965,
+  "fit_s": 0.2596779999998944,
+  "transform_s": 0.0313096999998379
+ },
+ {
+  "dataset": "cat_level_200",
+  "seed": 0,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.9791186063976239,
+  "synth_only": 0.9621291320812488,
+  "baseline_plus_synth": 0.9790841170884093,
+  "fit_s": 0.1535873000002539,
+  "transform_s": 0.03112520000013319
+ },
+ {
+  "dataset": "cat_level_200",
+  "seed": 1,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.9793773952268504,
+  "synth_only": 0.9595002673159068,
+  "baseline_plus_synth": 0.9791616996292447,
+  "fit_s": 0.1394113000001198,
+  "transform_s": 0.031225000000176806
+ },
+ {
+  "dataset": "cat_level_200",
+  "seed": 2,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.9800712722430802,
+  "synth_only": 0.9562332120884033,
+  "baseline_plus_synth": 0.9798883447239828,
+  "fit_s": 0.12973420000025726,
+  "transform_s": 0.031210799999826122
+ },
+ {
+  "dataset": "cat_interaction",
+  "seed": 0,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.15196290780144095,
+  "synth_only": 0.21201318612207598,
+  "baseline_plus_synth": 0.3249223919515626,
+  "fit_s": 0.1861613999999463,
+  "transform_s": 0.03134280000040235
+ },
+ {
+  "dataset": "cat_interaction",
+  "seed": 1,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.21422195902439378,
+  "synth_only": 0.24130919367088755,
+  "baseline_plus_synth": 0.3222692322048558,
+  "fit_s": 0.21237770000016098,
+  "transform_s": 0.03528890000006868
+ },
+ {
+  "dataset": "cat_interaction",
+  "seed": 2,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.23575204442514897,
+  "synth_only": 0.45448589913530446,
+  "baseline_plus_synth": 0.49072027816540165,
+  "fit_s": 0.33407919999990554,
+  "transform_s": 0.03246899999976449
+ },
+ {
+  "dataset": "numeric_only",
+  "seed": 0,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.4251194883353401,
+  "synth_only": 0.8518195200736942,
+  "baseline_plus_synth": 0.8515976811842223,
+  "fit_s": 0.22008450000021185,
+  "transform_s": 0.030541699999957928
+ },
+ {
+  "dataset": "numeric_only",
+  "seed": 1,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.49969861778631863,
+  "synth_only": 0.8611690771076369,
+  "baseline_plus_synth": 0.8611361977122161,
+  "fit_s": 0.18885359999967477,
+  "transform_s": 0.029551899999660236
+ },
+ {
+  "dataset": "numeric_only",
+  "seed": 2,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.47965174042342484,
+  "synth_only": 0.919023264305848,
+  "baseline_plus_synth": 0.9190336465949637,
+  "fit_s": 0.1933089000003747,
+  "transform_s": 0.03032600000005914
+ },
+ {
+  "dataset": "adult (openml)",
+  "seed": 0,
+  "task": "clf",
+  "lib": "upstream",
+  "baseline": 0.8984024002071245,
+  "synth_only": 0.8905313933412805,
+  "baseline_plus_synth": 0.899702466248818,
+  "fit_s": 0.2763481000001775,
+  "transform_s": 0.06160840000029566
+ },
+ {
+  "dataset": "adult (openml)",
+  "seed": 1,
+  "task": "clf",
+  "lib": "upstream",
+  "baseline": 0.8992133664280408,
+  "synth_only": 0.8825511396390873,
+  "baseline_plus_synth": 0.8999970400815246,
+  "fit_s": 0.3263678999996955,
+  "transform_s": 0.05995549999988725
+ },
+ {
+  "dataset": "adult (openml)",
+  "seed": 2,
+  "task": "clf",
+  "lib": "upstream",
+  "baseline": 0.9042812829677683,
+  "synth_only": 0.886862134071191,
+  "baseline_plus_synth": 0.90417965098719,
+  "fit_s": 0.33458939999991344,
+  "transform_s": 0.05956950000017969
+ },
+ {
+  "dataset": "diamonds (openml)",
+  "seed": 0,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.9142622019454905,
+  "synth_only": 0.9193125352945013,
+  "baseline_plus_synth": 0.9509558969341327,
+  "fit_s": 0.262188199999855,
+  "transform_s": 0.050459699999919394
+ },
+ {
+  "dataset": "diamonds (openml)",
+  "seed": 1,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.9517131533416687,
+  "synth_only": 0.9716435688685038,
+  "baseline_plus_synth": 0.852530058669366,
+  "fit_s": 0.255965599999854,
+  "transform_s": 0.0507924999997158
+ },
+ {
+  "dataset": "diamonds (openml)",
+  "seed": 2,
+  "task": "reg",
+  "lib": "upstream",
+  "baseline": 0.9380711242309786,
+  "synth_only": 0.9691689746979173,
+  "baseline_plus_synth": 0.5580242081252229,
+  "fit_s": 0.28604349999977785,
+  "transform_s": 0.05106400000022404
+ }
+]

@@ -811,7 +811,9 @@ class GeneticFeatureSynthesis(BaseEstimator, TransformerMixin):
 
         if self.categorical_generator_ is not None:
             X_pd = X_pd.reset_index(drop=True)
-            X_pd = pd.concat([X_pd, self.categorical_generator_.transform(X_pd)], axis=1)
+            X_pd = pd.concat(
+                [X_pd, self.categorical_generator_.transform(X_pd)], axis=1
+            )
 
         # Transform categorical columns if encoders were fitted
         if self.binary_cols_ and self.binary_encoder_ is not None:

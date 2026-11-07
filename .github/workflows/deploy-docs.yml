@@ -59,7 +59,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    # Forks without GitHub Pages enabled would fail here (404). Set the repo
+    # variable PAGES_ENABLED=true in a fork that does publish docs.
+    if: >-
+      github.event_name != 'pull_request' && github.ref == 'refs/heads/main' &&
+      (github.repository == 'martineastwood/featuristic' || vars.PAGES_ENABLED == 'true')
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

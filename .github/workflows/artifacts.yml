@@ -42,7 +42,7 @@ jobs:
             os: windows-latest
             arch: AMD64
           - platform: macos-arm64
-            os: macos-14
+            os: macos-15
             arch: arm64
           - platform: macos-x86_64
             os: macos-15-intel

@@ -31,7 +31,9 @@ def test_group_stats_frozen_and_unseen_fallback():
         tr["city__gdiff__price"], X["price"] - X["city"].map(means), atol=1e-9
     )
 
-    Xt = pd.DataFrame({"city": ["c0", "never_seen"], "price": [1.0, 2.0], "noise": [0, 0]})
+    Xt = pd.DataFrame(
+        {"city": ["c0", "never_seen"], "price": [1.0, 2.0], "noise": [0, 0]}
+    )
     out = gen.transform(Xt)
     assert np.isfinite(out.to_numpy()).all()
     # Unseen category -> average training group value; frequency -> 0.
@@ -79,10 +81,14 @@ def test_cap_and_continuous_columns_not_grouped():
 
 def test_gfs_option_off_matches_upstream_and_on_transform_consistent():
     X, y = _group_data(400)
-    kw = dict(
-        n_features=3, population_size=20, max_generations=3, pbar=False,
-        random_state=0, return_all_features=True,
-    )
+    kw = {
+        "n_features": 3,
+        "population_size": 20,
+        "max_generations": 3,
+        "pbar": False,
+        "random_state": 0,
+        "return_all_features": True,
+    }
     off = ft.GeneticFeatureSynthesis(categorical_interactions=False, **kw).fit(X, y)
     assert off.categorical_generator_ is None
     assert not any("__" in str(c) for c in off.feature_names_)
@@ -106,7 +112,13 @@ def test_gfs_numeric_only_unchanged_by_option():
     r = np.random.default_rng(3)
     X = pd.DataFrame(r.normal(size=(300, 3)), columns=list("abc"))
     y = X.a * X.b + r.normal(0, 0.1, 300)
-    kw = dict(n_features=2, population_size=20, max_generations=3, pbar=False, random_state=0)
+    kw = {
+        "n_features": 2,
+        "population_size": 20,
+        "max_generations": 3,
+        "pbar": False,
+        "random_state": 0,
+    }
     on = ft.GeneticFeatureSynthesis(**kw).fit(X, y)
     off = ft.GeneticFeatureSynthesis(categorical_interactions=False, **kw).fit(X, y)
     assert on.categorical_generator_ is None
